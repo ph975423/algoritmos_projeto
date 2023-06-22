@@ -1,0 +1,301 @@
+import time
+import discord
+from discord.ext import commands
+import smtplib
+import random
+import email.message
+import pandas as pd
+import datetime
+import asyncio
+
+
+def verificar_email(x, email_, nome, email_prof,
+                    nome_prof):  # Verifica se o e-mail fornecido consta no banco de dados e retorna o nome completo do usuário associado
+    for i in email_:
+        if i == x:
+            print("Aluno autenticado.")
+            return nome[email_.index(i)]
+
+    for i in email_prof:
+        if x == i:
+            print("Professor autenticado.")
+            return nome_prof[email_prof.index(i)]
+    print("Usuário não consta no banco de dados. Verifique se a escrita e tente novamente.")
+
+
+emails_alunos = []  # Emails institucionais dos alunos.
+nomes_alunos = []  # Nomes completos dos alunos
+emails_professores = []  # Emails institucionais dos professores
+nomes_professores = []  # Nomes completos dos professores
+
+planilha_alunos = pd.read_csv(
+    r"C:\Users\Particular\Downloads\alunos.csv")
+planilha_professores = pd.read_csv(
+    r"C:\Users\Particular\Downloads\professores.csv")
+for indice, linha in planilha_alunos.iterrows():  # lê a planilha com os dados e guarda nomes e e-mails nas listas correspondentes.
+    emails_alunos.append(linha[7])
+    nomes_alunos.extend([linha[1]])
+
+for indice, linha in planilha_professores.iterrows():  # lê a planilha com os dados e guarda nomes e e-mails nas listas correspondentes.
+    nomes_professores.extend([linha[0]])
+    emails_professores.extend([linha[1]])
+
+intents = discord.Intents.all()
+client = commands.Bot(command_prefix="",
+                      intents=intents)  # aqui definimos qual o prefixo que vamos utilizar na execução de comandos
+
+listaD = ['marcosbelods@gmail.com', 'paulimskt1213@gmail.com']  # lista especial com e-mail dos desenvolvedores do bot
+listaC = ['marcosviniroot@gmail.com']  # e-mail do coordenador do projeto
+cargo = False
+
+
+@client.event  # define o canal de autenticação
+async def on_guild_join(guild):
+    # pegando o canal inicial
+    canal_inicial = guild.text_channels[0]
+
+    # Define o canal inicial
+    await guild.edit(system_channel=canal_inicial)
+
+
+@client.event  # evento que adciona automaticamente o cargo de pretendente para um novo usuário
+async def on_member_join(member):
+    role_id = 1116342323975045231
+    role = discord.utils.get(member.guild.roles, id=int(role_id))
+    await member.add_roles(role)
+    a = datetime.datetime.now()
+    a = str(a)
+    b = a[11] + a[12]
+    b = int(b)
+    print(b)
+    channel_id = 1117801654633373820
+    channel = client.get_channel(channel_id)
+    username = member.name
+    if 4 < b < 12:
+        await channel.send('Bom dia! Seja bem-vindo, ' + username + '!')
+        await asyncio.sleep(3)
+        await channel.send(
+            'Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
+        await asyncio.sleep(3)
+        await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
+        await asyncio.sleep(3)
+        await channel.purge(limit=None)
+
+    elif 12 <= b < 18:
+        await channel.send('Boa tarde! Seja bem-vindo, ' + username + '!')
+        await asyncio.sleep(3)
+        await channel.send(
+            'Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
+        await asyncio.sleep(3)
+        await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
+        await asyncio.sleep(3)
+        await channel.purge(limit=None)
+
+    elif 18 <= b <= 23 or 00 <= b < 5:
+        await channel.send('Boa noite! Seja bem-vindo, ' + username + '!')
+        await asyncio.sleep(3)
+        await channel.send(
+            'Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
+        await asyncio.sleep(3)
+        await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
+        await asyncio.sleep(3)
+        await channel.purge(limit=None)
+
+    await asyncio.sleep(1)
+    embed = discord.Embed(title='Qual é o seu cargo na instituição atualmente?',
+                          description='Assinale dentre as opções abaixo:', color=discord.Color.blue())
+    embed.add_field(name='1- Aluno', value='Discente do curso de Engenharia de Computação.', inline=False)
+    embed.add_field(name='2 - Professor', value='Doscente do curso de Engenharia de Computação.', inline=False)
+    embed.add_field(name='3 - Egresso', value='Ex-Aluno concluinte do curso de Engenharia de Computação.', inline=False)
+
+    channel_id = 1117801654633373820
+    channel = client.get_channel(channel_id)
+    message = await channel.send(embed=embed)
+
+    await message.add_reaction('1️⃣')
+
+@client.event  # evento que reconhece uma reação executada num determinado canal
+async def on_reaction_add(reaction, user):
+    categoria = ""
+    canal_autenticacao = "autenticação"
+    channel = reaction.message.channel
+    canal = str(channel)
+    print(channel)
+    member = reaction.message.guild.get_member(user.id)
+
+    if str(reaction.emoji) == '1️⃣' and member.bot is False and canal == "autenticação":
+        await channel.send(f'{member.name} escolheu a opção Egresso.')
+        await reaction.message.delete()
+        categoria = "Egresso"
+        await asyncio.sleep(3)
+        await channel.purge(limit=None)
+        await channel.send(
+            'Agora, me envie seu nome completo e ano de conclusão da forma como mostra o modelo a seguir: "Nome, ano"')
+        print("reação recebida")
+
+    elif str(reaction.emoji) == '👍' and member.bot is False and canal == "professores":
+        print("autorizado")
+        lista = client.get_channel(1120674093159690310)
+        users = lista.members
+        user = users[3]
+        role = user.guild.get_role(1116342197638414437)
+        role2 = user.guild.get_role(1120911574010450061)
+        await user.add_roles(role)
+        await user.remove_roles(role2)
+
+        await channel.send(f'{member.name} reconheceu o Egresso')
+        await reaction.message.delete()
+        await asyncio.sleep(3)
+        await channel.purge(limit=1)
+
+
+    elif str(reaction.emoji) == '👎' and member.bot is False and canal == "professores":
+        print("Não reconhecido")
+        lista = client.get_channel(1120674093159690310)
+        users = lista.members
+        user = users[3]
+        await user.guild.ban(user, reason='O usuário não foi reconhecido')
+
+        await channel.send(f'{member.name} baniu o Usuário')
+        await reaction.message.delete()
+        await asyncio.sleep(3)
+        await channel.purge(limit=1)
+
+
+@client.event  # comando que vai-me permitir armazenar o endereço eletrónico informado pelo utilizador
+async def on_message(message):
+    global inicio
+    global ident
+    global email_user
+    user = message.author
+    if "limpar" in message.content:
+        await message.channel.purge(limit=None)
+    tamanho = len(message.content)
+    if "@" in message.content:
+        global email_user
+        response = message.content
+        email_user = response
+        nome = verificar_email(response, emails_alunos, nomes_alunos, emails_professores, nomes_professores)
+        if response not in listaD and response not in listaC:  # aqui definimos que o nome do usuário vai ser igual o nome que consta na lista oficial
+            await user.edit(nick=nome)
+        else:
+            if response == "paulimskt1213@gmail.com":
+                apelido = "<Dev_one>"
+                await user.edit(nick=apelido)
+            elif response == "marcosbelods@gmail.com":
+                apelido = "<Dev_two>"
+                await user.edit(nick=apelido)
+            elif response == 'marcosviniroot@gmail.com':
+                apelido = 'Coordenador'
+                await user.edit(nick=apelido)
+        if nome != None or response in listaD or response in listaC:
+            global ident
+            if response in emails_alunos or response in emails_professores or response in listaD or response in listaC:
+                identificacao = random.randint(100000,
+                                               999999)  # aqui eu estou gerarando uma senha de 6 digítos aleatória
+                ident = str(identificacao)
+
+                def enviar_email():  # função que envia o e-mail
+                    ident
+
+                    msg = email.message.Message()
+                    msg['Subject'] = "Autenticação"
+                    msg['From'] = 'bot.engenharia.computacao.ifpb@gmail.com'
+                    msg['To'] = email_user
+                    password = 'qhsrhphhvwsgbyxu'
+                    msg.add_header('Content-Type', 'text/html')
+                    msg.set_payload(ident)
+
+                    s = smtplib.SMTP('smtp.gmail.com: 587')
+                    s.starttls()
+                    # Login Credentials for sending the mail
+                    s.login(msg['From'], password)
+                    s.sendmail(msg['From'], [msg['To']], msg.as_string().encode('utf-8'))
+                    print('Email enviado')
+
+                enviar_email()
+
+                await message.channel.send(
+                    'Um e-mail contendo uma senha de 6 dígitos foi enviado, verifique e informe a senha em no máximo 5 minutos.')
+                global inicio
+                inicio = time.time()
+
+        else:  # usuário é banido caso digite o e-mail errado
+            guild = message.guild
+            member = message.author
+            await guild.ban(member, reason='E-mail informado está incorreto')
+
+    if tamanho == 6 and "," not in message.content and message.content != "limpar":
+        print("senha")
+        passw = int(message.content)
+        print(passw)
+        fim = time.time()
+        tempo = fim - inicio
+        global cargo
+        passowrd = passw
+        if int(passowrd) == int(ident) and tempo < 360:
+            cargo = True
+            await message.channel.send('Senha verificada!')
+            await message.channel.purge(limit=None)
+
+            # nas linhas abaixo eu faço a atribuição dos cargos
+
+            if email_user in emails_alunos and cargo:
+                user = message.author
+                role = user.guild.get_role(1116342141480869930)
+                role2 = user.guild.get_role(1116342323975045231)
+                await user.add_roles(role)
+                await user.remove_roles(role2)
+            elif email_user in emails_professores and cargo:
+                user = message.author
+                role = user.guild.get_role(1116341851348283442)
+                role2 = user.guild.get_role(1116342323975045231)
+                await user.add_roles(role)
+                await user.remove_roles(role2)
+            elif email_user in listaD and cargo:
+                user = message.author
+                role = user.guild.get_role(1116342085352693941)
+                role2 = user.guild.get_role(1116342323975045231)
+                await user.add_roles(role)
+                await user.remove_roles(role2)
+            elif email_user in listaC and cargo:
+                user = message.author
+                role = user.guild.get_role(1116341942687649803)
+                role2 = user.guild.get_role(1116342323975045231)
+                await user.add_roles(role)
+                await user.remove_roles(role2)
+        elif tempo > 360:
+            await message.channel.send("Seu código de verificação expirou, repita o processo novamente.")
+
+        else:  # usuário é banido caso digite a senha errada
+            guild = message.guild
+            member = message.author
+            await guild.ban(member, reason='Senha informada está incorreta')
+
+    if "," in message.content and user.bot is False:  # embed que envia os dados do aluno egresso para ser feita a autenticação no canal dos professores
+        print("printar egresso")
+        informacoes = message.content.split(",")
+        print(informacoes)
+        await message.channel.purge(limit=None)
+        embed = discord.Embed(title='Análise de identidade',
+                              description='O bot quer saber se pode permitir o seguinte usuário de entrar no servidor como "Egresso"',
+                              color=discord.Color.blue())
+        embed.add_field(name='Usuário', value=message.author, inline=False)
+        embed.add_field(name='Nome completo:', value=str(informacoes[0]), inline=False)
+        embed.add_field(name='Ano de conclusão:', value=str(informacoes[1]), inline=False)
+
+        channel_id = 1116858653220290601
+        channel = client.get_channel(channel_id)
+        message = await channel.send(embed=embed)
+
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+
+        role = user.guild.get_role(1120911574010450061)
+        role2 = user.guild.get_role(1116342323975045231)
+
+        await user.add_roles(role)
+        await user.remove_roles(role2)
+
+
+client.run('MTExNTk5MTk0MzE3NzA2NDQ4OQ.GzKGkb.axLmFX6uzv0pkCRtDzB9o8gX3Ih4GllCglU0xA')
