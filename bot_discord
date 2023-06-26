@@ -7,6 +7,7 @@ import email.message
 import pandas as pd
 import datetime
 import asyncio
+
 def verificar_email(x, email_, nome, email_prof, nome_prof):  # Verifica se o email fornecido consta no banco de dados e retorna o nome completo do usuário associado
     print(x)
     for i in email_:
@@ -22,15 +23,14 @@ def verificar_email(x, email_, nome, email_prof, nome_prof):  # Verifica se o em
             return nome_prof[email_prof.index(i)]
     print("Usuário não consta no banco de dados. Verifique se a escrita e tente novamente.")
 
-
 emails_alunos = [] #Emails institucionais dos alunos.
 nomes_alunos = [] #Nomes completos dos alunos
 emails_professores = [] #Emails institucionais dos professores
 nomes_professores = [] #Nomes completos dos professores
 
-
 planilha_alunos = pd.read_csv(r"C:\Users\marco\OneDrive\Área de Trabalho\Faculdade\Algoritmos e programação\Projeto - Algoritmos e  Programação\alunos.csv")
 planilha_professores = pd.read_csv(r"C:\Users\marco\OneDrive\Área de Trabalho\Faculdade\Algoritmos e programação\Projeto - Algoritmos e  Programação\professores.csv")
+
 for indice, linha in planilha_alunos.iterrows(): #lê a planilha com os dados e guarda nomes e emails nas respectivas listas.
     emails_alunos.append(linha[7])
     nomes_alunos.extend([linha[1]])
@@ -45,7 +45,6 @@ client = commands.Bot(command_prefix="", intents=intents)  # aqui definimos qual
 listaD = ['marcosbelods@gmail.com', 'paulimskt1213@gmail.com']  # lista especial com e-mail dos desenvolvedores do bot
 listaC = ['henrique.cunha@ifpb.edu.br']
 cargo = False
-
 
 @client.event
 async def on_guild_join(guild):
@@ -66,39 +65,36 @@ async def on_member_join(member):
     a = datetime.datetime.now()
     a = str(a)
     b = a[11:16]
-
-
-
     print("O membro %s entrou no servidor as %s hrs" % (username,b))
     channel_id = 1117801654633373820
     channel = client.get_channel(channel_id)
     b = float(a[11] + a[12] + "." +a[14] + a[15])
+
     if 4 < b < 12:
-        await asyncio.sleep(2)
         await channel.send('Bom dia! Seja bem-vindo, ' + username + '!')
-        await asyncio.sleep(4)
+        await asyncio.sleep(1)
         await channel.send('Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
-        await asyncio.sleep(5)
+        await asyncio.sleep(3)
         await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
-        await asyncio.sleep(4)
+        await asyncio.sleep(2)
         await channel.purge(limit=None)
 
     elif 12 <= b < 18:
         await channel.send('Boa tarde! Seja bem-vindo, ' + username + '!')
-        await asyncio.sleep(3)
+        await asyncio.sleep(1)
         await channel.send('Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
         await asyncio.sleep(3)
         await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         await channel.purge(limit=None)
 
     elif 18 <= b <=23 or 00 <= b < 5 :
         await channel.send('Boa noite! Seja bem-vindo, ' + username + '!')
-        await asyncio.sleep(3)
+        await asyncio.sleep(1)
         await channel.send('Eu sou o bot desenvolvido pelos alunos do curso para automatizar a experiência do usuário no servidor.')
         await asyncio.sleep(3)
         await channel.send('Primeiramente, por meio deste canal vamos autenticar o seu acesso ao servidor')
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         await channel.purge(limit=None)
 
     await asyncio.sleep(0)
@@ -109,7 +105,6 @@ async def on_member_join(member):
     channel_id = 1117801654633373820
     channel = client.get_channel(channel_id)
     message = await channel.send(embed=embed)
-
     await message.add_reaction('1️⃣')
     await message.add_reaction('2️⃣')
 
@@ -133,7 +128,7 @@ async def on_reaction_add(reaction, user):
         await reaction.message.delete()
         await asyncio.sleep(3)
         await channel.purge(limit=None)
-        await channel.send('Agora, me envie seu nome completo e ano de conclusão da forma como mostra o modelo a seguir: "Nome, ano"')
+        await channel.send('Agora, me envie seu nome completo, ano de conclusão, sua data de nascimento e e-mail de contato como mostra o modelo a seguir: "Nome, ano de conclusão, data de nascimento, e-mail"')
         print("reação recebida")
 
 
@@ -147,13 +142,33 @@ async def on_reaction_add(reaction, user):
         role2 = user.guild.get_role(1120911574010450061)
         await user.add_roles(role)
         await user.remove_roles(role2)
-
-
         await channel.send(f'{member.name} reconheceu o Egresso')
         await reaction.message.delete()
         await asyncio.sleep(3)
         await channel.purge(limit=1)
 
+        def enviar_email():  # função que envia o e-mail
+
+            msg = email.message.Message()
+            msg['Subject'] = "Autenticação"
+            msg['From'] = 'bot.engenharia.computacao.ifpb@gmail.com'
+            msg['To'] = email_egresso
+            password = 'qhsrhphhvwsgbyxu'
+            msg.add_header('Content-Type', 'text/html')
+            msg.set_payload('Você foi aceito no servidor oficial do curso de Engenharia de Computação - IFPB')
+
+            s = smtplib.SMTP('smtp.gmail.com: 587')
+            s.starttls()
+            # Login Credentials for sending the mail
+            s.login(msg['From'], password)
+            s.sendmail(msg['From'], [msg['To']], msg.as_string().encode('utf-8'))
+            print('Email enviado')
+
+        enviar_email()
+        lista_espera_id = 1120674093159690310
+        lista_espera = client.get_channel(lista_espera_id)
+        await lista_espera.purge(limit=None)
+        await lista_espera.send("Você foi aceito no servidor oficial do curso de Engenharia de Computação - IFPB")
 
     elif str(reaction.emoji) == '👎' and member.bot == False and canal == "coordenador_egressos":
         print("Não reconhecido")
@@ -161,7 +176,6 @@ async def on_reaction_add(reaction, user):
         users = lista.members
         user = users[3]
         await user.guild.ban(user, reason='O usuário não foi reconhecido')
-
         await channel.send(f'{member.name} baniu o Usuário')
         await reaction.message.delete()
         await asyncio.sleep(3)
@@ -173,28 +187,35 @@ async def on_message(message):
     canal = message.channel
     user = message.author
     print("%s em %s: %s "%(user,canal,mensagem))
+
     if "limpar" in message.content:
         await message.channel.purge(limit=None)
     tamanho = len(message.content)
-    if "@" in message.content:
+
+    if "@" in message.content and "," not in message.content:
         global email_user
         response = message.content
         email_user = response
         nome = verificar_email(response, emails_alunos, nomes_alunos, emails_professores, nomes_professores)
+
         if nome!= None:  # aqui definimos que o nome do usuário vai ser igual o nome que consta na lista oficial
             await user.edit(nick=nome)
+
         elif email_user == "paulimskt1213@gmail.com":
             apelido = "<Dev_one>"
             await user.edit(nick=apelido)
+
         elif email_user == "marcosbelods@gmail.com":
             apelido = "<Dev_two>"
             await user.edit(nick=apelido)
+
         elif email_user == "henrique.cunha@ifpb.edu.br":
             apelido = "Coordenador"
             await user.edit(nick=apelido)
 
         if nome != None or email_user in listaD or email_user in listaC:
             global ident
+
             if response in emails_alunos or response in emails_professores or response in listaD or response in listaC:
                 identificacao = random.randint(100000,
                                                999999)  # aqui eu estou gerarando uma senha de 6 digítos aleatória
@@ -220,8 +241,7 @@ async def on_message(message):
 
                 enviar_email()
 
-                await message.channel.send(
-                    'Um e-mail contendo uma senha de 6 dígitos foi enviado, verifique e informe a senha em no máximo 5 minutos.')
+                await message.channel.send('Um e-mail contendo uma senha de 6 dígitos foi enviado, verifique e informe a senha em no máximo 5 minutos.')
                 global inicio
                 inicio = time.time()
 
@@ -241,6 +261,7 @@ async def on_message(message):
         tempo = fim - inicio
         global cargo
         passowrd = passw
+
         if int(passowrd) == int(ident) and tempo < 360:
             cargo = True
             await message.channel.send('Senha verificada!')
@@ -254,24 +275,28 @@ async def on_message(message):
                 role2 = user.guild.get_role(1116342323975045231)
                 await user.add_roles(role)
                 await user.remove_roles(role2)
+
             elif email_user in emails_professores and cargo:
                 user = message.author
                 role = user.guild.get_role(1116341851348283442)
                 role2 = user.guild.get_role(1116342323975045231)
                 await user.add_roles(role)
                 await user.remove_roles(role2)
+
             elif email_user in listaD and cargo:
                 user = message.author
                 role = user.guild.get_role(1116342085352693941)
                 role2 = user.guild.get_role(1116342323975045231)
                 await user.add_roles(role)
                 await user.remove_roles(role2)
+
             elif email_user in listaC and cargo:
                 user = message.author
                 role = user.guild.get_role(1116341942687649803)
                 role2 = user.guild.get_role(1116342323975045231)
                 await user.add_roles(role)
                 await user.remove_roles(role2)
+
         elif tempo > 360:
             await message.channel.send("Seu código de verificação expirou, repita o processo novamente.")
 
@@ -283,28 +308,49 @@ async def on_message(message):
             await guild.ban(member, reason='Senha informada está incorreta')
             await message.channel.purge(limit=None)
 
-
     if "," in message.content and user.bot == False:
-
+        data = datetime.datetime.now()
+        data = str(data)
+        ano = data[0:4]
         print("printar egresso")
         informacoes = message.content.split(",")
-        print(informacoes)
-        await message.channel.purge(limit=None)
-        embed = discord.Embed(title='Análise de identidade',description='O bot quer saber se pode permitir o seguinte usuário de entrar no servidor como "Egresso"', color=discord.Color.blue())
-        embed.add_field(name= 'Usuário', value= message.author , inline=False)
-        embed.add_field(name='Nome completo:', value= str(informacoes[0]) , inline=False)
-        embed.add_field(name='Ano de conclusão:', value= str(informacoes[1]) , inline=False)
 
-        channel_id = 1122861503595425852
-        channel = client.get_channel(channel_id)
-        message = await channel.send(embed=embed)
+        if int(informacoes[1]) <= int(ano):
+            global email_egresso
+            email_egresso = str(informacoes[3])
+            print(informacoes)
+            user1 = message.author
+            await user1.edit(nick=informacoes[0])
+            await message.channel.purge(limit=None)
+            embed = discord.Embed(title='Análise de identidade',description='O bot quer saber se pode permitir o seguinte usuário de entrar no servidor como "Egresso"', color=discord.Color.blue())
+            embed.add_field(name= 'Usuário', value= message.author , inline=False)
+            embed.add_field(name='Nome completo:', value= str(informacoes[0]) , inline=False)
+            embed.add_field(name='Ano de conclusão:', value= str(informacoes[1]) , inline=False)
+            embed.add_field(name='Data de nascimento:', value=str(informacoes[2]), inline=False)
+            embed.add_field(name='E-mail de contato:', value=str(informacoes[3]), inline=False)
 
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
+            channel_id = 1122861503595425852
+            channel = client.get_channel(channel_id)
+            message = await channel.send(embed=embed)
 
-        role = user.guild.get_role(1120911574010450061)
-        role2 = user.guild.get_role(1116342323975045231)
+            await message.add_reaction('👍')
+            await message.add_reaction('👎')
 
-        await user.add_roles(role)
-        await user.remove_roles(role2)
-client.run(TOKEN)
+            role = user.guild.get_role(1120911574010450061)
+            role2 = user.guild.get_role(1116342323975045231)
+
+            lista_espera_id = 1120674093159690310
+            await user.add_roles(role)
+            await user.remove_roles(role2)
+            lista_espera = client.get_channel(lista_espera_id)
+            await lista_espera.send('Você foi adicionado a lista de espera, assim que for aceito receberá um e-mail informando.')
+
+        else:
+            await message.channel.send("Você será banido por fornecer informações incorretas.")
+            guild = message.guild
+            member = message.author
+            await asyncio.sleep(3)
+            await guild.ban(member, reason='Data de conclusão incorreta')
+            await message.channel.purge(limit=None)
+
+client.run("TOKEN")
